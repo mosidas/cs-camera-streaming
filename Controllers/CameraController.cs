@@ -10,19 +10,51 @@ namespace cs_streaming.Controllers;
 [Route("[controller]")]
 public class CameraController : ControllerBase
 {
-    private VideoCapture capture;
+    private readonly ILogger<CameraController> _logger;
+    private VideoCapture _capture;
     private Mat frame;
 
-    public CameraController()
+    public CameraController(ILogger<CameraController> logger)
     {
-        capture = new VideoCapture(0); // 0 is the ID of the webcam
+        _logger = logger;
+        _capture = new VideoCapture(0); // 0 is the ID of the webcam
         frame = new Mat();
+    }
+
+    [HttpGet("stream3")]
+    public async Task<IActionResult> Stream()
+    {
+        _capture.Open(0);
+
+        if (!_capture.IsOpened())
+        {
+            return NotFound("Camera is not available.");
+        }
+
+        while (true)
+        {
+            using var frame = new Mat();
+            _capture.Read(frame);
+
+            if (frame.Empty())
+            {
+                continue;
+            }
+
+            Cv2.Resize(frame, frame, new OpenCvSharp.Size(500, 500));
+            Cv2.PutText(frame, $"Date: {DateTime.Now:yyyy-MM-dd HH:mm:ss}", new OpenCvSharp.Point(5, 20),
+                HersheyFonts.HersheySimplex, 0.5, Scalar.Green, 2, LineTypes.AntiAlias);
+
+            using var stream = frame.ToMemoryStream(".jpg");
+            var bytes = stream.ToArray();
+            await Response.Body.WriteAsync(bytes);
+        }
     }
 
     [HttpGet("stream")]
     public HttpResponseMessage Get()
     {
-        capture.Read(frame);
+        _capture.Read(frame);
 
         Cv2.ImShow("Live", frame);
 

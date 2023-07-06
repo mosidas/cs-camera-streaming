@@ -30,6 +30,8 @@ export class CameraFeed extends React.Component {
                 <img src={this.state.imgSrc} alt="camera feed" />
                 <h2>stream2</h2>
                 <img src="camera/stream2" alt="camera feed" />
+                <h1>Video Streaming Demonstration</h1>
+                <img src="/camera/stream3" alt="Video Stream"/>
             </div>
         );
     }
